@@ -596,6 +596,29 @@ export class HomeComponent implements OnInit {
     this.currentDateTime = new Date();
     this.populateTimeOptions();
     this.setDefaultTimezone();
+  }  populateTimeOptions() {
+    const nearestSlot = this.getNearestSlot(new Date());
+
+    // Reset pickupTimes array
+    this.pickupTimes = [];
+
+    // Generate next 5 time slots for today
+    for (let i = 0; i < 5; i++) {
+      const formattedTime = this.formatTime(nearestSlot);
+      const formattedLabel = this.formatLabel(nearestSlot);
+      this.pickupTimes.push({ value: formattedTime, label: formattedLabel });
+      nearestSlot.setMinutes(nearestSlot.getMinutes() + 15);
+    }
+
+    // Generate time slots for the next day
+    const nextDaySlots = ['7:00 AM', '8:00 AM', '9:00 AM', '10:00 AM'];
+    nextDaySlots.forEach(time => {
+      const formattedTime = this.formatNextDayTime(time);
+      const formattedLabel = this.formatNextDayLabel(time);
+      this.pickupTimes.push({ value: formattedTime, label: formattedLabel });
+    });
+
+    this.selectedTime = this.pickupTimes[0].value;
   }
 
   getNearestSlot(date: Date): Date {
@@ -607,33 +630,12 @@ export class HomeComponent implements OnInit {
     return nearestSlot;
   }
 
-  populateTimeOptions() {
-    const nearestSlot = this.getNearestSlot(new Date(this.currentDateTime));
-
-    // Generate next 5 time slots for today
-    for (let i = 0; i < 5; i++) {
-      const formattedTime = this.formatTime(nearestSlot);
-      const formattedLabel = this.formatLabel(nearestSlot);
-      this.pickupTimes.push({ value: formattedTime, label: formattedLabel });
-      nearestSlot.setMinutes(nearestSlot.getMinutes() + 15);
-    }
-
-    // Generate time slots for the next day
-    const nextDaySlots = ['07:00 AM', '08:00 AM', '09:00 AM', '10:00 AM'];
-    nextDaySlots.forEach(time => {
-      const formattedLabel = this.formatNextDayLabel(time);
-      this.pickupTimes.push({ value: time, label: formattedLabel });
-    });
-
-    this.selectedTime = this.pickupTimes[0].value;
-  }
-
   formatTime(date: Date): string {
     const hours = date.getHours();
     const minutes = date.getMinutes();
     const ampm = hours >= 12 ? 'PM' : 'AM';
     const formattedHours = hours % 12 || 12; // Adjust 0 to 12 for midnight
-    const formattedTime = `${formattedHours}:${minutes < 10 ? '0' + minutes : minutes} ${ampm}`;
+    const formattedTime = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${formattedHours}:${minutes < 10 ? '0' + minutes : minutes} ${ampm}`;
     return formattedTime;
   }
 
@@ -641,8 +643,16 @@ export class HomeComponent implements OnInit {
     const dayOfWeek = moment(date).format('dddd');
     const monthDay = moment(date).format('MMMM D');
     const timezone = moment.tz.guess();
-    const formattedLabel = `${dayOfWeek} ${monthDay} @ ${this.formatTime(date)} (${timezone})`;
+    const timeLt = moment(date).format('LT');
+    const formattedLabel = `${dayOfWeek} ${monthDay} @ ${timeLt} (${timezone})`;
     return formattedLabel;
+  }
+
+  
+  formatNextDayTime(time: string): string {
+    const tomorrow = moment().add(1, 'day');
+    const formattedTime = `${tomorrow.format('YYYY-MM-DD')} ${time}`;
+    return formattedTime;
   }
 
   formatNextDayLabel(time: string): string {
@@ -661,11 +671,10 @@ export class HomeComponent implements OnInit {
   }
 
   onSubmit() {
-    const formattedDateTime = this.formatDateTime(moment().tz(this.selectedTimezone));
     const submissionData = {
       name: this.name,
       email: this.email,
-      pickTime: formattedDateTime,
+      selectedTime: this.selectedTime,
       timezone: this.selectedTimezone,
       howDidYouHear: this.howDidYouHear
     };
@@ -680,7 +689,6 @@ export class HomeComponent implements OnInit {
           const errorMessage = res.body && res.body.message ? res.body.message : 'An error occurred';
          
           if (res.status == 200) {
-            
             setTimeout(() => {
               this.spinner.hide();
               window.open("https://workshop.spujah.com/registersuccess", '_parent');
@@ -713,13 +721,7 @@ export class HomeComponent implements OnInit {
               window.location.reload();
           }, 1000);
       
- 
- 
         }
       );
-  }
-
-  formatDateTime(dateTime: moment.Moment): string {
-    return dateTime.format('YYYY-MM-DD hh:mm A');
   }
 }
