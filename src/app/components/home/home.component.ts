@@ -681,47 +681,75 @@ export class HomeComponent implements OnInit {
 
     console.log('Submitting:', submissionData);
 
-    const webhookUrl = 'https://api.michaelthehomebuyer.ca/workshopspujah/webform-podio';
-    this.http.post(webhookUrl, submissionData, { observe: 'response' }).subscribe(
-        (res: HttpResponse<any>) => {
-          console.log('Data successfully sent to webhook', res.status);
-          const statusString: string = res.body.status.toString(); 
-          const errorMessage = res.body && res.body.message ? res.body.message : 'An error occurred';
-         
-          if (res.status == 200) {
-            setTimeout(() => {
-              this.spinner.hide();
-              window.open("https://workshop.spujah.com/registersuccess", '_parent');
-            }, 1000);
-         } else if (res.status == 400) {
-          alert(errorMessage);
-          location.reload;
-            setTimeout(() => {
-                this.spinner.hide();
-                window.open("https://workshop.spujah.com/registerfailed", '_parent');
-            }, 1000);
- 
-        } else if (res.status == 500) {
-          alert(errorMessage);
-          location.reload;
-            setTimeout(() => {
-                this.spinner.hide();
-                window.location.reload();
-            }, 1000);
- 
-        }
- 
-        },
-        error => {
-          console.error('Error sending data to webhook', error);
-          alert("Some error occured. Please try after sometime");
-        location.reload;
+
+
+    const [firstName, ...rest] = submissionData.name.split(' ');
+    const lastName = rest.join(' ') || 'Unknown';
+
+    const apiUrl = `https://api.webinarjam.com/everwebinar/register?api_key=9be7e6c4-f81a-44be-940b-5126ebb59b28&webinar_id=2&first_name=${encodeURIComponent(firstName)}&last_name=${encodeURIComponent(lastName)}&email=${encodeURIComponent(submissionData.email)}&schedule=${encodeURIComponent(submissionData.selectedTime)}`;
+
+    this.spinner.show();
+
+    this.http.get(apiUrl).subscribe(
+      (res: any) => {
+        if (res.status === "success") {
           setTimeout(() => {
-              this.spinner.hide();
-              window.location.reload();
+            this.spinner.hide();
+            window.open(res.user.live_room_url, '_parent');
           }, 1000);
-      
+        } else {
+          window.open("https://workshop.spujah.com/registerfailed", '_parent');
         }
-      );
+      },
+      (error) => {
+        window.open("https://workshop.spujah.com/registerfailed", '_parent');
+      }
+    );
+
+    // const webhookUrl = 'https://api.michaelthehomebuyer.ca/workshopspujah/webform-podio';
+    // this.http.post(webhookUrl, submissionData, { observe: 'response' }).subscribe(
+    //     (res: HttpResponse<any>) => {
+    //       console.log('Data successfully sent to webhook', res.status);
+    //       const statusString: string = res.body.status.toString(); 
+    //       const errorMessage = res.body && res.body.message ? res.body.message : 'An error occurred';
+         
+    //       if (res.status == 200) {
+    //         setTimeout(() => {
+    //           this.spinner.hide();
+    //           window.open("https://workshop.spujah.com/registersuccess", '_parent');
+    //         }, 1000);
+    //      } else if (res.status == 400) {
+    //       alert(errorMessage);
+    //       location.reload;
+    //         setTimeout(() => {
+    //             this.spinner.hide();
+    //             window.open("https://workshop.spujah.com/registerfailed", '_parent');
+    //         }, 1000);
+ 
+    //     } else if (res.status == 500) {
+    //       alert(errorMessage);
+    //       location.reload;
+    //         setTimeout(() => {
+    //             this.spinner.hide();
+    //             window.location.reload();
+    //         }, 1000);
+ 
+    //     }
+ 
+    //     },
+    //     error => {
+    //       console.error('Error sending data to webhook', error);
+    //       alert("Some error occured. Please try after sometime");
+    //     location.reload;
+    //       setTimeout(() => {
+    //           this.spinner.hide();
+    //           window.location.reload();
+    //       }, 1000);
+      
+    //     }
+    //   );
+
+
+
   }
 }
