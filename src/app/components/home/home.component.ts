@@ -1,5 +1,8 @@
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import moment  from 'moment-timezone';
+import { NgxSpinnerService } from 'ngx-spinner';
 
 @Component({
   selector: 'app-home',
@@ -585,6 +588,10 @@ export class HomeComponent implements OnInit {
     { value: "WET", label: "WET GMT+0:00" },
     { value: "Zulu", label: "Zulu GMT+0:00" }
   ];
+  howDidYouHear: string = 'Social Media';
+
+  constructor(private http: HttpClient, private spinner : NgxSpinnerService,  private router: Router,) {
+  }
   ngOnInit() {
     this.currentDateTime = new Date();
     this.populateTimeOptions();
@@ -654,7 +661,65 @@ export class HomeComponent implements OnInit {
   }
 
   onSubmit() {
-    console.log(`Selected time: ${this.selectedTime}, Selected timezone: ${this.selectedTimezone}`);
-    console.log(`Name: ${this.name}, Email: ${this.email}`);
+    const formattedDateTime = this.formatDateTime(moment().tz(this.selectedTimezone));
+    const submissionData = {
+      name: this.name,
+      email: this.email,
+      pickTime: formattedDateTime,
+      timezone: this.selectedTimezone,
+      howDidYouHear: this.howDidYouHear
+    };
+
+    console.log('Submitting:', submissionData);
+
+    const webhookUrl = 'https://api.michaelthehomebuyer.ca/workshopspujah/webform-podio';
+    this.http.post(webhookUrl, submissionData, { observe: 'response' }).subscribe(
+        (res: HttpResponse<any>) => {
+          console.log('Data successfully sent to webhook', res.status);
+          const statusString: string = res.body.status.toString(); 
+          const errorMessage = res.body && res.body.message ? res.body.message : 'An error occurred';
+         
+          if (res.status == 200) {
+            
+            setTimeout(() => {
+              this.spinner.hide();
+              window.open("https://workshop.spujah.com/registersuccess", '_parent');
+            }, 1000);
+         } else if (res.status == 400) {
+          alert(errorMessage);
+          location.reload;
+            setTimeout(() => {
+                this.spinner.hide();
+                window.open("https://workshop.spujah.com/registerfailed", '_parent');
+            }, 1000);
+ 
+        } else if (res.status == 500) {
+          alert(errorMessage);
+          location.reload;
+            setTimeout(() => {
+                this.spinner.hide();
+                window.location.reload();
+            }, 1000);
+ 
+        }
+ 
+        },
+        error => {
+          console.error('Error sending data to webhook', error);
+          alert("Some error occured. Please try after sometime");
+        location.reload;
+          setTimeout(() => {
+              this.spinner.hide();
+              window.location.reload();
+          }, 1000);
+      
+ 
+ 
+        }
+      );
+  }
+
+  formatDateTime(dateTime: moment.Moment): string {
+    return dateTime.format('YYYY-MM-DD hh:mm A');
   }
 }
