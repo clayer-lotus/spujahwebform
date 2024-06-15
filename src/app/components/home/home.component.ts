@@ -603,7 +603,7 @@ export class HomeComponent implements OnInit {
     this.pickupTimes = [];
 
     // Generate next 5 time slots for today
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 1; i++) {
       const formattedTime = this.formatTime(nearestSlot);
       const formattedLabel = this.formatLabel(nearestSlot);
       this.pickupTimes.push({ value: formattedTime, label: formattedLabel });
@@ -611,7 +611,7 @@ export class HomeComponent implements OnInit {
     }
 
     // Generate time slots for the next day
-    const nextDaySlots = ['7:00 AM', '8:00 AM', '9:00 AM', '10:00 AM'];
+    const nextDaySlots = ['7:00 AM', '8:00 AM', '9:00 AM'];
     nextDaySlots.forEach(time => {
       const formattedTime = this.formatNextDayTime(time);
       const formattedLabel = this.formatNextDayLabel(time);
