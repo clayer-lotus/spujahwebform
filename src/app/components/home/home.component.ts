@@ -655,7 +655,7 @@ export class HomeComponent implements OnInit {
     const submissionData = {
       name: this.name,
       email: this.email,
-      selectedTime: 3,
+      selectedTime: "3",
       timezone: `GMT${timezoneOffset}`,
       howDidYouHear: this.howDidYouHear
     };
