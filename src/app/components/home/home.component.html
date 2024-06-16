@@ -72,11 +72,10 @@
 
                     <div class="mb-3">
                         <label for="timezone" class="form-label">Timezone</label>
-                        <select class="form-select" aria-label="Default select example" id="timezone"
-                            [(ngModel)]="selectedTimezone" name="timezone" required>
-                            <option *ngFor="let tz of timezones" [value]="tz.value">{{ tz.label }}</option>
+                        <select class="form-select" aria-label="Default select example" id="timezone" [(ngModel)]="selectedTimezone" name="timezone" required (change)="onTimezoneChange()">
+                          <option *ngFor="let tz of timezones" [value]="tz.value">{{ tz.label }}</option>
                         </select>
-                    </div>
+                      </div>
 
                     <div class="row justify-content-center align-items-center">
                         <div class="col-lg-6">

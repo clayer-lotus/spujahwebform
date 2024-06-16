@@ -591,12 +591,11 @@ export class HomeComponent implements OnInit {
   howDidYouHear: string = 'Social Media';
 
   constructor(private http: HttpClient, private spinner : NgxSpinnerService,  private router: Router,) {
-  }
-  ngOnInit() {
-    this.currentDateTime = new Date();
-    this.populateTimeOptions();
+  }ngOnInit() {
+    
     this.setDefaultTimezone();
-  } 
+    this.populateTimeOptions();
+  }
 
   populateTimeOptions() {
     const nearestSlot = this.getNearestSlot(new Date());
@@ -607,16 +606,9 @@ export class HomeComponent implements OnInit {
     // Generate next 5 time slots for today
     for (let i = 0; i < 1; i++) {
       const formattedLabel = this.formatLabel(nearestSlot);
-      this.pickupTimes.push({ value: `${i+3}`, label: formattedLabel });
+      this.pickupTimes.push({ value: `${i + 3}`, label: formattedLabel });
       nearestSlot.setMinutes(nearestSlot.getMinutes() + 15);
     }
-
-    // Generate time slots for the next day
-    const nextDaySlots = ['7:00 AM', '8:00 AM', '9:00 AM'];
-    nextDaySlots.forEach((time, index) => {
-      const formattedLabel = this.formatNextDayLabel(time);
-      this.pickupTimes.push({ value: `${index+28}`, label: formattedLabel });
-    });
 
     this.selectedTime = this.pickupTimes[0].value;
   }
@@ -631,17 +623,17 @@ export class HomeComponent implements OnInit {
 
   formatLabel(date: Date): string {
     const dayOfWeek = moment(date).format('dddd');
-    const monthDay = moment(date).format('MMMM D');
+    const monthDay = moment(date).format('MMM Do YY');
     const timezone = moment.tz.guess();
-    const timeLt = moment(date).format('LT');
-    const formattedLabel = `${dayOfWeek} ${monthDay} @ ${timeLt} (${timezone})`;
+    const timeLt = moment(date).tz(this.selectedTimezone).format('LT');
+    const formattedLabel = `${dayOfWeek} ${monthDay} @ ${timeLt}`;
     return formattedLabel;
   }
 
   formatNextDayLabel(time: string): string {
     const tomorrow = moment().add(1, 'day');
     const dayOfWeek = tomorrow.format('dddd');
-    const monthDay = tomorrow.format('MMMM D');
+    const monthDay = tomorrow.format('MMM Do YY');
     const timezone = moment.tz.guess();
     const formattedLabel = `${dayOfWeek} ${monthDay} @ ${time} (${timezone})`;
     return formattedLabel;
@@ -651,6 +643,10 @@ export class HomeComponent implements OnInit {
     const currentTimezone = moment.tz.guess();
     const matchingTimezone = this.timezones.find(tz => tz.value === currentTimezone);
     this.selectedTimezone = matchingTimezone ? matchingTimezone.value : this.timezones[0].value;
+  }
+
+  onTimezoneChange() {
+    this.populateTimeOptions();
   }
 
   onSubmit() {
@@ -677,8 +673,8 @@ export class HomeComponent implements OnInit {
     })
       .then(response => response.json())
       .then(res => {
-        if (res.status == "success") {
-          console.log("success 1");
+        if (res.status === 'success') {
+          console.log('success 1');
           // Construct the data to send to the second API
           const podioData = {
             ...submissionData,
@@ -694,22 +690,22 @@ export class HomeComponent implements OnInit {
             .then(podioResponse => podioResponse.json())
             .then(podioRes => {
               setTimeout(() => {
-                console.log("success 2");
+                console.log('success 2');
                 this.spinner.hide();
-                window.open(res.user.live_room_url, "_parent");
+                window.open(res.user.live_room_url, '_parent');
               }, 1000);
             })
             .catch(podioError => {
               console.error('Error sending data to Podio:', podioError);
               setTimeout(() => {
                 this.spinner.hide();
-                window.open("https://workshop.spujah.com/registerfailed", "_parent");
+                window.open('https://workshop.spujah.com/registerfailed', '_parent');
               }, 1000);
             });
         } else {
           setTimeout(() => {
-            this.spinner.hide(); 
-            window.open("https://workshop.spujah.com/registerfailed", "_parent");
+            this.spinner.hide();
+            window.open('https://workshop.spujah.com/registerfailed', '_parent');
           }, 1000);
         }
       })
