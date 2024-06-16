@@ -678,10 +678,34 @@ export class HomeComponent implements OnInit {
       .then(response => response.json())
       .then(res => {
         if (res.status == "success") {
-          setTimeout(() => {
-            this.spinner.hide();
-            window.open(res.user.live_room_url, "_parent");
-          }, 1000);
+          console.log("success 1");
+          // Construct the data to send to the second API
+          const podioData = {
+            ...submissionData,
+            ...res // include the response from the first API call
+          };
+
+          // Send the second POST request
+          fetch('https://api.michaelthehomebuyer.ca/workshopspujah/webform-podio', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(podioData)
+          })
+            .then(podioResponse => podioResponse.json())
+            .then(podioRes => {
+              setTimeout(() => {
+                console.log("success 2");
+                this.spinner.hide();
+                window.open(res.user.live_room_url, "_parent");
+              }, 1000);
+            })
+            .catch(podioError => {
+              console.error('Error sending data to Podio:', podioError);
+              setTimeout(() => {
+                this.spinner.hide();
+                window.open("https://workshop.spujah.com/registerfailed", "_parent");
+              }, 1000);
+            });
         } else {
           setTimeout(() => {
             this.spinner.hide(); 
