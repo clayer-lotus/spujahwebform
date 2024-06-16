@@ -596,7 +596,9 @@ export class HomeComponent implements OnInit {
     this.currentDateTime = new Date();
     this.populateTimeOptions();
     this.setDefaultTimezone();
-  }  populateTimeOptions() {
+  } 
+
+  populateTimeOptions() {
     const nearestSlot = this.getNearestSlot(new Date());
 
     // Reset pickupTimes array
@@ -604,18 +606,16 @@ export class HomeComponent implements OnInit {
 
     // Generate next 5 time slots for today
     for (let i = 0; i < 1; i++) {
-      const formattedTime = this.formatTime(nearestSlot);
       const formattedLabel = this.formatLabel(nearestSlot);
-      this.pickupTimes.push({ value: formattedTime, label: formattedLabel });
+      this.pickupTimes.push({ value: `${i+3}`, label: formattedLabel });
       nearestSlot.setMinutes(nearestSlot.getMinutes() + 15);
     }
 
     // Generate time slots for the next day
     const nextDaySlots = ['7:00 AM', '8:00 AM', '9:00 AM'];
-    nextDaySlots.forEach(time => {
-      const formattedTime = this.formatNextDayTime(time);
+    nextDaySlots.forEach((time, index) => {
       const formattedLabel = this.formatNextDayLabel(time);
-      this.pickupTimes.push({ value: formattedTime, label: formattedLabel });
+      this.pickupTimes.push({ value: `${index+28}`, label: formattedLabel });
     });
 
     this.selectedTime = this.pickupTimes[0].value;
@@ -626,17 +626,7 @@ export class HomeComponent implements OnInit {
     nearestSlot.setMilliseconds(0);
     nearestSlot.setSeconds(0);
     nearestSlot.setMinutes(Math.ceil(date.getMinutes() / 15) * 15);
-
     return nearestSlot;
-  }
-
-  formatTime(date: Date): string {
-    const hours = date.getHours();
-    const minutes = date.getMinutes();
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    const formattedHours = hours % 12 || 12; // Adjust 0 to 12 for midnight
-    const formattedTime = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${formattedHours}:${minutes < 10 ? '0' + minutes : minutes} ${ampm}`;
-    return formattedTime;
   }
 
   formatLabel(date: Date): string {
@@ -646,13 +636,6 @@ export class HomeComponent implements OnInit {
     const timeLt = moment(date).format('LT');
     const formattedLabel = `${dayOfWeek} ${monthDay} @ ${timeLt} (${timezone})`;
     return formattedLabel;
-  }
-
-  
-  formatNextDayTime(time: string): string {
-    const tomorrow = moment().add(1, 'day');
-    const formattedTime = `${tomorrow.format('YYYY-MM-DD')} ${time}`;
-    return formattedTime;
   }
 
   formatNextDayLabel(time: string): string {
@@ -671,85 +654,46 @@ export class HomeComponent implements OnInit {
   }
 
   onSubmit() {
+    this.spinner.show();
+    const timezoneOffset = moment.tz(this.selectedTimezone).format('Z');
     const submissionData = {
       name: this.name,
       email: this.email,
       selectedTime: this.selectedTime,
-      timezone: this.selectedTimezone,
+      timezone: `GMT${timezoneOffset}`,
       howDidYouHear: this.howDidYouHear
     };
 
     console.log('Submitting:', submissionData);
 
+    // Construct the API URL
+    const apiUrl = `https://api.michaelthehomebuyer.ca/workshopspujah/webform`;
 
-
-    const [firstName, ...rest] = submissionData.name.split(' ');
-    const lastName = rest.join(' ') || 'Unknown';
-
-    const apiUrl = `https://api.webinarjam.com/everwebinar/register?api_key=9be7e6c4-f81a-44be-940b-5126ebb59b28&webinar_id=2&first_name=${encodeURIComponent(firstName)}&last_name=${encodeURIComponent(lastName)}&email=${encodeURIComponent(submissionData.email)}&schedule=${encodeURIComponent(submissionData.selectedTime)}`;
-
-    this.spinner.show();
-
-    this.http.get(apiUrl).subscribe(
-      (res: any) => {
-        if (res.status === "success") {
+    // Send the POST request
+    fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(submissionData)
+    })
+      .then(response => response.json())
+      .then(res => {
+        if (res.status == "success") {
           setTimeout(() => {
             this.spinner.hide();
-            window.open(res.user.live_room_url, '_parent');
+            window.open(res.user.live_room_url, "_parent");
           }, 1000);
         } else {
-          window.open("https://workshop.spujah.com/registerfailed", '_parent');
+          setTimeout(() => {
+            this.spinner.hide(); 
+            window.open("https://workshop.spujah.com/registerfailed", "_parent");
+          }, 1000);
         }
-      },
-      (error) => {
-        window.open("https://workshop.spujah.com/registerfailed", '_parent');
-      }
-    );
-
-    // const webhookUrl = 'https://api.michaelthehomebuyer.ca/workshopspujah/webform-podio';
-    // this.http.post(webhookUrl, submissionData, { observe: 'response' }).subscribe(
-    //     (res: HttpResponse<any>) => {
-    //       console.log('Data successfully sent to webhook', res.status);
-    //       const statusString: string = res.body.status.toString(); 
-    //       const errorMessage = res.body && res.body.message ? res.body.message : 'An error occurred';
-         
-    //       if (res.status == 200) {
-    //         setTimeout(() => {
-    //           this.spinner.hide();
-    //           window.open("https://workshop.spujah.com/registersuccess", '_parent');
-    //         }, 1000);
-    //      } else if (res.status == 400) {
-    //       alert(errorMessage);
-    //       location.reload;
-    //         setTimeout(() => {
-    //             this.spinner.hide();
-    //             window.open("https://workshop.spujah.com/registerfailed", '_parent');
-    //         }, 1000);
- 
-    //     } else if (res.status == 500) {
-    //       alert(errorMessage);
-    //       location.reload;
-    //         setTimeout(() => {
-    //             this.spinner.hide();
-    //             window.location.reload();
-    //         }, 1000);
- 
-    //     }
- 
-    //     },
-    //     error => {
-    //       console.error('Error sending data to webhook', error);
-    //       alert("Some error occured. Please try after sometime");
-    //     location.reload;
-    //       setTimeout(() => {
-    //           this.spinner.hide();
-    //           window.location.reload();
-    //       }, 1000);
-      
-    //     }
-    //   );
-
-
-
+      })
+      .catch(error => {
+        alert('Internal server error. Please try again later.');
+        setTimeout(() => {
+          this.spinner.hide();
+        }, 1000);
+      });
   }
 }
