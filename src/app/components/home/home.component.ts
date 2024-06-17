@@ -692,7 +692,7 @@ export class HomeComponent implements OnInit {
               setTimeout(() => {
                 console.log('success 2');
                 this.spinner.hide();
-                window.open(res.user.live_room_url, '_parent');
+                window.open(res.user.thank_you_url, '_parent');
               }, 1000);
             })
             .catch(podioError => {
